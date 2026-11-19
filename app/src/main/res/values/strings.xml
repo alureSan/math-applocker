@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Math Applocker</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="done">Done</string>
+    <string name="back">Back</string>
+    <string name="loading">Loading…</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="not_now">Not now</string>
+    <string name="continue_label">Continue</string>
+    <string name="error_generic">Something went wrong</string>
+
+    <!-- Home -->
+    <string name="service_active">Service is active</string>
+    <string name="service_inactive">Service is inactive</string>
+    <string name="service_disabled_title">Service is off</string>
+    <string name="service_disabled_msg">Turn on the service to start showing math challenges.</string>
+    <string name="enable_service">Turn on math challenges</string>
+    <string name="disable_service">Turn off</string>
+    <string name="permission_needed">Permission needed</string>
+    <string name="permissions_title">Permissions</string>
+    <string name="grant">Grant</string>
+    <string name="granted">Granted</string>
+    <string name="permission_required_to_enable">Grant the required permissions to turn protection on.</string>
+    <string name="permission_dialog_message">%1$s\n\n%2$s</string>
+    <string name="unlock_remaining">Selected apps unlocked for %1$s</string>
+    <string name="configuration">Configuration</string>
+    <string name="rules_summary">%1$d min · %2$d tasks</string>
+    <string name="digits_entered">%1$d of 4 digits entered</string>
+    <string name="delete_digit">Delete digit</string>
+    <string name="perm_overlay_title">Display over other apps</string>
+    <string name="perm_overlay_explain">Required to draw the math challenge on top of the app being locked.</string>
+    <string name="perm_usage_title">Usage access</string>
+    <string name="perm_usage_explain">Required to detect which app you are using.</string>
+    <string name="perm_usage_cannot_open">Could not open the usage access settings. Open Settings → Apps → Special access → Usage access and enable Math Applocker.</string>
+    <string name="perm_notifications_title">Notifications</string>
+    <string name="perm_notifications_explain">Required so the protection service can keep running reliably in the background.</string>
+    <string name="perm_battery_title">Battery optimisation</string>
+    <string name="perm_battery_explain">Disable battery optimisation for Math Applocker so the system does not stop the protection service.</string>
+
+    <string name="configure_math_rules">Math rules &amp; timing</string>
+    <string name="choose_apps">Apps to lock</string>
+    <string name="choose_apps_title">Choose apps</string>
+    <string name="choose_apps_summary">%1$d selected</string>
+    <string name="no_apps_selected">No apps selected</string>
+    <string name="manage_questions">Custom questions</string>
+    <string name="manage_questions_summary">%1$d saved</string>
+    <string name="choose_language_title">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+    <string name="about">About</string>
+    <string name="about_summary">Free and open source. No ads, no tracking, no subscriptions.</string>
+    <string name="version_label">Version %1$s</string>
+
+    <!-- Settings -->
+    <string name="interval_minutes">Interval between challenges (minutes)</string>
+    <string name="num_questions">Math tasks per challenge</string>
+    <string name="difficulty">Difficulty</string>
+    <string name="categories">Operations</string>
+    <string name="cat_add">Addition (+)</string>
+    <string name="cat_sub">Subtraction (−)</string>
+    <string name="cat_mul">Multiplication (×)</string>
+    <string name="cat_div">Division (÷)</string>
+    <string name="radio_3_4">3–4 years</string>
+    <string name="radio_5_7">5–7 years</string>
+    <string name="radio_8_10">8–10 years</string>
+    <string name="radio_11_13">11–13 years</string>
+    <string name="radio_14_17">14–17 years</string>
+    <string name="radio_adult">Adult</string>
+    <string name="select_at_least_one_category">Select at least one operation</string>
+    <string name="invalid_interval">Enter an interval between 1 and 720 minutes</string>
+    <string name="invalid_question_count">Enter between 1 and 20 tasks</string>
+    <string name="interval_helper">After solving a challenge, selected apps stay unlocked for this long.</string>
+
+    <!-- App picker -->
+    <string name="search_apps">Search apps</string>
+    <string name="no_results">No apps found</string>
+    <string name="save_apps">Save selection</string>
+    <string name="app_list_saved">App selection saved</string>
+
+    <!-- Custom questions -->
+    <string name="add_question">Add question</string>
+    <string name="add_question_title">New custom question</string>
+    <string name="hint_question">Question (e.g. 5 + 5)</string>
+    <string name="hint_answer">Answer</string>
+    <string name="fill_question_and_answer">Fill in both the question and a numeric answer</string>
+    <string name="no_custom_questions">No custom questions yet. They are mixed into every challenge.</string>
+    <string name="confirm_delete_question_title">Delete question?</string>
+    <string name="confirm_delete_question_msg">This custom question will be removed from future challenges.</string>
+    <string name="delete_question">Delete question</string>
+
+    <!-- PIN -->
+    <string name="set_pin_title">Create a 4-digit PIN</string>
+    <string name="set_pin_subtitle">The PIN protects settings and app selection.</string>
+    <string name="set_pin_confirm">Confirm your PIN</string>
+    <string name="enter_pin_title">Enter your PIN</string>
+    <string name="enter_pin_subtitle">Math Applocker is locked.</string>
+    <string name="pin_mismatch">PINs do not match</string>
+    <string name="wrong_pin">Incorrect PIN</string>
+    <string name="pin_too_short">Enter 4 digits</string>
+    <string name="too_many_attempts">Too many attempts. Try again in %1$d s</string>
+    <string name="pin_hint">4-digit PIN</string>
+
+    <!-- Overlay / quiz -->
+    <string name="overlay_title">Solve to continue</string>
+    <string name="overlay_subtitle">Finish the challenge to keep using this app.</string>
+    <string name="overlay_progress">%1$d of %2$d</string>
+    <string name="overlay_correct">Correct!</string>
+    <string name="overlay_incorrect">Not quite, try again</string>
+    <string name="overlay_submit">Check answer</string>
+    <string name="overlay_solved">Challenge complete</string>
+    <string name="overlay_exit_home">Exit to home</string>
+    <string name="overlay_clear">Clear</string>
+    <string name="overlay_backspace">Delete last digit</string>
+    <string name="overlay_answer_hint">Your answer</string>
+    <string name="overlay_media_paused">Playback paused while the challenge is open</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_name">Protection service</string>
+    <string name="notif_channel_description">Keeps the math challenge service running.</string>
+    <string name="notif_title">Math Applocker</string>
+    <string name="notif_active">Protecting %1$d app(s)</string>
+    <string name="notif_no_apps">No apps selected yet</string>
+    <string name="notif_paused">Service paused</string>
+    <string name="notif_stop">Stop</string>
+    <string name="notif_open">Open</string>
+    <string name="notif_permission_missing">Permissions missing — tap to finish setup</string>
+
+    <string name="boot_restart_failed">Android blocked the background start. Open Math Applocker to re-enable protection.</string>
+</resources>
