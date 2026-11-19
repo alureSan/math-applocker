@@ -1,5 +1,6 @@
 package com.mathapplocker.foss.overlay
 
+import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.keyframes
@@ -82,6 +83,17 @@ fun QuizOverlayScreen(
     val question = questions[safeIndex]
     val isLast = safeIndex == questions.lastIndex
 
+    val confirmHaptic = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        HapticFeedbackConstants.CONFIRM
+    } else {
+        HapticFeedbackConstants.VIRTUAL_KEY
+    }
+    val rejectHaptic = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        HapticFeedbackConstants.REJECT
+    } else {
+        HapticFeedbackConstants.LONG_PRESS
+    }
+
     LaunchedEffect(safeIndex, feedback) {
         if (feedback == Feedback.CORRECT) {
             delay(800)
@@ -112,12 +124,12 @@ fun QuizOverlayScreen(
         val value = input.toIntOrNull()
         if (value == null) {
             feedback = Feedback.INCORRECT
-            view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+            view.performHapticFeedback(rejectHaptic)
             shakeNow()
             return
         }
         if (value == question.answer) {
-            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+            view.performHapticFeedback(confirmHaptic)
             if (isLast) {
                 onSolved()
             } else {
@@ -128,7 +140,7 @@ fun QuizOverlayScreen(
         } else {
             feedback = Feedback.INCORRECT
             input = ""
-            view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+            view.performHapticFeedback(rejectHaptic)
             shakeNow()
         }
     }

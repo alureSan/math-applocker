@@ -1,6 +1,6 @@
 # Math Applocker
 
-A modern, privacy-friendly parental-control app for **Android 12+** that gates selected apps behind a short math challenge. This is a clean-room rewrite of an older app with no ads, no tracking, no network access, and no subscriptions.
+A modern, privacy-friendly parental-control app for **Android 10+** that gates selected apps behind a short math challenge. This is a clean-room rewrite of an older app with no ads, no tracking, no network access, and no subscriptions.
 
 <p align="center">
   <img src="docs/screenshots/home.png" width="45%" alt="Home screen" />
@@ -16,12 +16,13 @@ A modern, privacy-friendly parental-control app for **Android 12+** that gates s
 - **PIN protection** — 4-digit PIN hashed with salted PBKDF2-HMAC-SHA256 (not a single SHA-256), with a lockout after repeated failures. The app re-locks shortly after it goes to the background.
 - **Custom questions** — add your own question/answer pairs, stored locally in Room; they are mixed into every challenge.
 - **Age presets** — six difficulty levels from 3–4 years to adult, with selectable operations (+, −, ×, ÷). Division always has an exact integer answer.
+- **Material 3 / dynamic color** — Material You wallpaper colors on Android 12+, with a green fallback palette on Android 10–11.
 - **English and Spanish** — fully localized, switchable in-app.
 - **No network** — the app does not request the `INTERNET` permission.
 
 ## Requirements
 
-- Android 12 (API 31) or newer.
+- Android 10 (API 29) or newer. Tested on Android 10 (EMUI 10.1) and Android 13.
 - Three special permissions, granted from the home screen:
   1. **Display over other apps** (`SYSTEM_ALERT_WINDOW`) — to draw the challenge.
   2. **Usage access** (`PACKAGE_USAGE_STATS`) — to detect the foreground app.

@@ -2,6 +2,8 @@ package com.mathapplocker.foss.overlay
 
 import android.content.Context
 import android.graphics.PixelFormat
+import android.os.Build
+import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -74,12 +76,18 @@ class OverlayController(
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             title = "Math challenge"
-            layoutInDisplayCutoutMode =
+            layoutInDisplayCutoutMode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-            // Do not let the system inset the overlay around system bars; the
-            // scrim must cover the entire screen.
-            setFitInsetsTypes(0)
-            setFitInsetsIgnoringVisibility(true)
+            } else {
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // Do not let the system inset the overlay around system bars; the
+                // scrim must cover the entire screen.
+                setFitInsetsTypes(0)
+                setFitInsetsIgnoringVisibility(true)
+            }
         }
 
         return try {
@@ -106,16 +114,50 @@ class OverlayController(
     private fun readInsets(manager: WindowManager): OverlayInsets {
         val density = context.resources.displayMetrics.density.coerceAtLeast(1f)
         return runCatching {
-            val metrics = manager.currentWindowMetrics
-            val bars = metrics.windowInsets.getInsetsIgnoringVisibility(
-                WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
-            )
-            OverlayInsets(
-                left = (bars.left / density).dp,
-                top = (bars.top / density).dp,
-                right = (bars.right / density).dp,
-                bottom = (bars.bottom / density).dp,
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val metrics = manager.currentWindowMetrics
+                val bars = metrics.windowInsets.getInsetsIgnoringVisibility(
+                    WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
+                )
+                OverlayInsets(
+                    left = (bars.left / density).dp,
+                    top = (bars.top / density).dp,
+                    right = (bars.right / density).dp,
+                    bottom = (bars.bottom / density).dp,
+                )
+            } else {
+                legacyInsets(manager, density)
+            }
         }.getOrDefault(OverlayInsets(top = 24.dp, bottom = 16.dp))
+    }
+
+    @Suppress("DEPRECATION")
+    private fun legacyInsets(manager: WindowManager, density: Float): OverlayInsets {
+        val display = manager.defaultDisplay
+        val real = DisplayMetrics().also { display.getRealMetrics(it) }
+        val usable = DisplayMetrics().also { display.getMetrics(it) }
+
+        val statusBarPx = context.resources
+            .getIdentifier("status_bar_height", "dimen", "android")
+            .takeIf { it > 0 }
+            ?.let { context.resources.getDimensionPixelSize(it) }
+            ?: 0
+
+        val landscape = real.widthPixels > real.heightPixels
+        return if (landscape) {
+            // Navigation bar is normally on the right in landscape.
+            val navWidth = (real.widthPixels - usable.widthPixels).coerceAtLeast(0)
+            OverlayInsets(
+                top = (statusBarPx / density).dp,
+                right = (navWidth / density).dp,
+            )
+        } else {
+            val totalBars = (real.heightPixels - usable.heightPixels).coerceAtLeast(0)
+            val navHeight = (totalBars - statusBarPx).coerceAtLeast(0)
+            OverlayInsets(
+                top = (statusBarPx / density).dp,
+                bottom = (navHeight / density).dp,
+            )
+        }
     }
 }
