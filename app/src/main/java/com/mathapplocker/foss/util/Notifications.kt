@@ -64,7 +64,11 @@ object Notifications {
             missingPermissions -> context.getString(R.string.notif_permission_missing)
             !enabled -> context.getString(R.string.notif_paused)
             blockedCount == 0 -> context.getString(R.string.notif_no_apps)
-            else -> context.getString(R.string.notif_active, blockedCount)
+            else -> context.resources.getQuantityString(
+                R.plurals.protecting_apps,
+                blockedCount,
+                blockedCount,
+            )
         }
 
         return NotificationCompat.Builder(context, CHANNEL_ID)

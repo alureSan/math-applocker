@@ -33,9 +33,9 @@ import com.mathapplocker.foss.R
 
 @Composable
 fun LeadingAvatar(
+    modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     text: String? = null,
-    modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier.size(44.dp),

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.mathapplocker.foss.math.Difficulty
 import com.mathapplocker.foss.math.Operation
+import com.mathapplocker.foss.math.QuestionGenerator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +14,12 @@ data class Settings(
     val intervalMinutes: Int = 5,
     val numQuestions: Int = 3,
     val difficulty: Difficulty = Difficulty.AGE_5_7,
+    /** Advanced mode replaces generated questions with custom challenge content. */
+    val advancedMode: Boolean = false,
+    /** Operand digit count (1–4), or [QuestionGenerator.AUTO_DIGITS] to follow the difficulty. */
+    val operandDigits: Int = QuestionGenerator.AUTO_DIGITS,
+    /** Multiplication tables (1–9) selected by the user; empty means generated multiplication. */
+    val timesTables: Set<Int> = emptySet(),
     val categories: Set<Operation> = Operation.entries.toSet(),
     val blockedApps: Set<String> = emptySet(),
     val hasPin: Boolean = false,
@@ -57,6 +64,14 @@ class Prefs private constructor(context: Context) {
         intervalMinutes = prefs.getInt(KEY_INTERVAL, 5).coerceIn(MIN_INTERVAL, MAX_INTERVAL),
         numQuestions = prefs.getInt(KEY_NUM_QUESTIONS, 3).coerceIn(MIN_QUESTIONS, MAX_QUESTIONS),
         difficulty = Difficulty.fromKey(prefs.getString(KEY_DIFFICULTY, null)),
+        advancedMode = prefs.getBoolean(KEY_ADVANCED_MODE, false),
+        operandDigits = prefs.getInt(KEY_OPERAND_DIGITS, QuestionGenerator.AUTO_DIGITS)
+            .coerceIn(MIN_OPERAND_DIGITS, MAX_OPERAND_DIGITS),
+        timesTables = prefs.getStringSet(KEY_TIMES_TABLES, emptySet())
+            ?.mapNotNull { it.toIntOrNull() }
+            ?.filter { it in 1..9 }
+            ?.toSet()
+            ?: emptySet(),
         categories = readOperations(),
         blockedApps = prefs.getStringSet(KEY_BLOCKED_APPS, emptySet())?.toSet() ?: emptySet(),
         hasPin = !prefs.getString(KEY_PIN_HASH, null).isNullOrEmpty(),
@@ -82,6 +97,21 @@ class Prefs private constructor(context: Context) {
 
     fun setDifficulty(difficulty: Difficulty) =
         edit { putString(KEY_DIFFICULTY, difficulty.key) }
+
+    fun setAdvancedMode(enabled: Boolean) = edit { putBoolean(KEY_ADVANCED_MODE, enabled) }
+
+    fun setOperandDigits(digits: Int) =
+        edit { putInt(KEY_OPERAND_DIGITS, digits.coerceIn(MIN_OPERAND_DIGITS, MAX_OPERAND_DIGITS)) }
+
+    fun toggleTimesTable(table: Int) {
+        if (table !in 1..9) return
+        val current = _settings.value.timesTables
+        setTimesTables(if (table in current) current - table else current + table)
+    }
+
+    fun setTimesTables(tables: Set<Int>) = edit {
+        putStringSet(KEY_TIMES_TABLES, tables.filter { it in 1..9 }.map(Int::toString).toSet())
+    }
 
     fun setCategories(operations: Set<Operation>) =
         edit { putStringSet(KEY_CATEGORIES, operations.map { it.key }.toSet()) }
@@ -146,12 +176,17 @@ class Prefs private constructor(context: Context) {
         const val MAX_INTERVAL = 720
         const val MIN_QUESTIONS = 1
         const val MAX_QUESTIONS = 20
+        const val MIN_OPERAND_DIGITS = QuestionGenerator.AUTO_DIGITS
+        const val MAX_OPERAND_DIGITS = 4
         const val DEFAULT_ITERATIONS = 30_000
 
         private const val KEY_ENABLED = "enabled"
         private const val KEY_INTERVAL = "interval_minutes"
         private const val KEY_NUM_QUESTIONS = "num_questions"
         private const val KEY_DIFFICULTY = "difficulty"
+        private const val KEY_ADVANCED_MODE = "advanced_mode"
+        private const val KEY_OPERAND_DIGITS = "operand_digits"
+        private const val KEY_TIMES_TABLES = "times_tables"
         private const val KEY_CATEGORIES = "cats"
         private const val KEY_BLOCKED_APPS = "blocked_apps"
         private const val KEY_AUTHED = "authed"

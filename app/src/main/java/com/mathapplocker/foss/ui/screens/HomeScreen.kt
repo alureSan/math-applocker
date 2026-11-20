@@ -25,14 +25,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -52,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -64,11 +69,13 @@ import com.mathapplocker.foss.R
 import com.mathapplocker.foss.data.Prefs
 import com.mathapplocker.foss.data.Settings
 import com.mathapplocker.foss.data.db.AppDatabase
+import com.mathapplocker.foss.math.QuestionGenerator
 import com.mathapplocker.foss.service.OverlaySchedulerService
 import com.mathapplocker.foss.ui.Screen
 import com.mathapplocker.foss.ui.common.NavigationRow
 import com.mathapplocker.foss.ui.common.PermissionRow
 import com.mathapplocker.foss.ui.common.SectionLabel
+import com.mathapplocker.foss.util.AppLocale
 import com.mathapplocker.foss.util.AppPermissions
 import com.mathapplocker.foss.util.Notifications
 import kotlinx.coroutines.delay
@@ -99,7 +106,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val prefs = remember { Prefs.get(context) }
     val database = remember { AppDatabase.get(context) }
-    val customQuestions by remember { database.customQuestions().observeAll() }
+    val sets by remember { database.questionSets().observeAll() }
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     var permissions by remember { mutableStateOf(readPermissions(context)) }
@@ -237,68 +244,73 @@ fun HomeScreen(
             }
 
             item {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    ),
-                    shape = MaterialTheme.shapes.large,
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
-                        Text(
-                            text = if (permissions.coreGranted) {
-                                stringResource(R.string.permissions_title)
-                            } else {
-                                stringResource(R.string.permission_needed)
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        PermissionRow(
-                            title = stringResource(R.string.perm_overlay_title),
-                            description = stringResource(R.string.perm_overlay_explain),
-                            granted = permissions.overlay,
-                            grantLabel = stringResource(R.string.grant),
-                            onGrant = { openPermission(PermissionKind.OVERLAY) },
-                        )
-                        PermissionRow(
-                            title = stringResource(R.string.perm_usage_title),
-                            description = stringResource(R.string.perm_usage_explain),
-                            granted = permissions.usage,
-                            grantLabel = stringResource(R.string.grant),
-                            onGrant = { openPermission(PermissionKind.USAGE) },
-                        )
-                        PermissionRow(
-                            title = stringResource(R.string.perm_notifications_title),
-                            description = stringResource(R.string.perm_notifications_explain),
-                            granted = permissions.notifications,
-                            grantLabel = stringResource(R.string.grant),
-                            onGrant = { openPermission(PermissionKind.NOTIFICATIONS) },
-                        )
-                        PermissionRow(
-                            title = stringResource(R.string.perm_battery_title),
-                            description = stringResource(R.string.perm_battery_explain),
-                            granted = permissions.ignoringBatteryOptimizations,
-                            grantLabel = stringResource(R.string.grant),
-                            onGrant = { openPermission(PermissionKind.BATTERY) },
-                        )
-                    }
-                }
+                PermissionsCard(
+                    permissions = permissions,
+                    onGrant = { openPermission(it) },
+                )
             }
 
             item { SectionLabel(stringResource(R.string.configuration)) }
 
             item {
-                NavigationRow(
-                    title = stringResource(R.string.configure_math_rules),
-                    subtitle = stringResource(
-                        R.string.rules_summary,
-                        settings.intervalMinutes,
-                        settings.numQuestions,
-                    ),
-                    icon = Icons.Filled.Add,
-                    onClick = { onNavigate(Screen.Math) },
+                ChallengeModeCard(
+                    advanced = settings.advancedMode,
+                    onChange = { prefs.setAdvancedMode(it) },
                 )
+            }
+
+            if (settings.advancedMode) {
+                item {
+                    val setsLabel = pluralStringResource(
+                        R.plurals.set_count,
+                        sets.size,
+                        sets.size,
+                    )
+                    val tablesLabel = if (settings.timesTables.isEmpty()) {
+                        stringResource(R.string.no_tables)
+                    } else {
+                        pluralStringResource(
+                            R.plurals.table_count,
+                            settings.timesTables.size,
+                            settings.timesTables.size,
+                        )
+                    }
+                    NavigationRow(
+                        title = stringResource(R.string.manage_questions),
+                        subtitle = pluralStringResource(
+                            R.plurals.rules_summary,
+                            settings.numQuestions,
+                            settings.intervalMinutes,
+                            settings.numQuestions,
+                            "$setsLabel · $tablesLabel",
+                        ),
+                        icon = Icons.Filled.Edit,
+                        onClick = { onNavigate(Screen.Questions) },
+                    )
+                }
+            } else {
+                item {
+                    NavigationRow(
+                        title = stringResource(R.string.configure_math_rules),
+                        subtitle = pluralStringResource(
+                            R.plurals.rules_summary,
+                            settings.numQuestions,
+                            settings.intervalMinutes,
+                            settings.numQuestions,
+                            if (settings.operandDigits == QuestionGenerator.AUTO_DIGITS) {
+                                stringResource(R.string.digits_auto)
+                            } else {
+                                pluralStringResource(
+                                    R.plurals.digit_count,
+                                    settings.operandDigits,
+                                    settings.operandDigits,
+                                )
+                            },
+                        ),
+                        icon = Icons.Filled.Add,
+                        onClick = { onNavigate(Screen.Math) },
+                    )
+                }
             }
 
             item {
@@ -307,19 +319,14 @@ fun HomeScreen(
                     subtitle = if (settings.blockedApps.isEmpty()) {
                         stringResource(R.string.no_apps_selected)
                     } else {
-                        stringResource(R.string.choose_apps_summary, settings.blockedApps.size)
+                        pluralStringResource(
+                            R.plurals.choose_apps_summary,
+                            settings.blockedApps.size,
+                            settings.blockedApps.size,
+                        )
                     },
                     icon = Icons.Filled.Lock,
                     onClick = { onNavigate(Screen.Apps) },
-                )
-            }
-
-            item {
-                NavigationRow(
-                    title = stringResource(R.string.manage_questions),
-                    subtitle = stringResource(R.string.manage_questions_summary, customQuestions.size),
-                    icon = Icons.Filled.Edit,
-                    onClick = { onNavigate(Screen.Questions) },
                 )
             }
 
@@ -395,6 +402,7 @@ fun HomeScreen(
                         selected = !current.startsWith("es"),
                         onClick = {
                             prefs.setLanguage("en")
+                            Notifications.ensureChannel(AppLocale.localizedContext(context))
                             applyLocale("en")
                             showLanguageDialog = false
                         },
@@ -404,6 +412,7 @@ fun HomeScreen(
                         selected = current.startsWith("es"),
                         onClick = {
                             prefs.setLanguage("es")
+                            Notifications.ensureChannel(AppLocale.localizedContext(context))
                             applyLocale("es")
                             showLanguageDialog = false
                         },
@@ -447,6 +456,175 @@ fun HomeScreen(
 }
 
 @Composable
+private fun PermissionsCard(
+    permissions: PermissionSnapshot,
+    onGrant: (PermissionKind) -> Unit,
+) {
+    val allGranted = permissions.overlay &&
+        permissions.usage &&
+        permissions.notifications &&
+        permissions.ignoringBatteryOptimizations
+    val container = if (allGranted) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.errorContainer
+    }
+    val onContainer = if (allGranted) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onErrorContainer
+    }
+    val accent = if (allGranted) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = container),
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(accent.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (allGranted) Icons.Filled.Check else Icons.Filled.Warning,
+                        contentDescription = null,
+                        tint = accent,
+                    )
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(
+                            if (allGranted) {
+                                R.string.all_permissions_granted
+                            } else {
+                                R.string.missing_permissions_title
+                            },
+                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = onContainer,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(
+                            if (allGranted) {
+                                R.string.all_permissions_summary
+                            } else {
+                                R.string.missing_permissions_summary
+                            },
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = onContainer.copy(alpha = 0.8f),
+                    )
+                }
+            }
+
+            if (!allGranted) {
+                Spacer(Modifier.height(12.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                        if (!permissions.overlay) {
+                            PermissionRow(
+                                title = stringResource(R.string.perm_overlay_title),
+                                description = stringResource(R.string.perm_overlay_explain),
+                                granted = false,
+                                grantLabel = stringResource(R.string.grant),
+                                onGrant = { onGrant(PermissionKind.OVERLAY) },
+                            )
+                        }
+                        if (!permissions.usage) {
+                            PermissionRow(
+                                title = stringResource(R.string.perm_usage_title),
+                                description = stringResource(R.string.perm_usage_explain),
+                                granted = false,
+                                grantLabel = stringResource(R.string.grant),
+                                onGrant = { onGrant(PermissionKind.USAGE) },
+                            )
+                        }
+                        if (!permissions.notifications) {
+                            PermissionRow(
+                                title = stringResource(R.string.perm_notifications_title),
+                                description = stringResource(R.string.perm_notifications_explain),
+                                granted = false,
+                                grantLabel = stringResource(R.string.grant),
+                                onGrant = { onGrant(PermissionKind.NOTIFICATIONS) },
+                            )
+                        }
+                        if (!permissions.ignoringBatteryOptimizations) {
+                            PermissionRow(
+                                title = stringResource(R.string.perm_battery_title),
+                                description = stringResource(R.string.perm_battery_explain),
+                                granted = false,
+                                grantLabel = stringResource(R.string.grant),
+                                onGrant = { onGrant(PermissionKind.BATTERY) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChallengeModeCard(
+    advanced: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+            Text(
+                text = stringResource(R.string.challenge_mode),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(
+                    selected = !advanced,
+                    onClick = { onChange(false) },
+                    label = { Text(stringResource(R.string.mode_basic)) },
+                )
+                FilterChip(
+                    selected = advanced,
+                    onClick = { onChange(true) },
+                    label = { Text(stringResource(R.string.mode_advanced)) },
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = stringResource(
+                    if (advanced) {
+                        R.string.mode_advanced_summary
+                    } else {
+                        R.string.mode_basic_summary
+                    },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun StatusCard(
     enabled: Boolean,
     active: Boolean,
@@ -469,7 +647,11 @@ private fun StatusCard(
         stringResource(R.string.service_inactive)
     }
     val subtitle = when {
-        active && blockedCount > 0 -> stringResource(R.string.notif_active, blockedCount)
+        active && blockedCount > 0 -> pluralStringResource(
+            R.plurals.protecting_apps,
+            blockedCount,
+            blockedCount,
+        )
         active -> stringResource(R.string.notif_no_apps)
         enabled -> stringResource(R.string.permission_required_to_enable)
         else -> stringResource(R.string.service_disabled_msg)

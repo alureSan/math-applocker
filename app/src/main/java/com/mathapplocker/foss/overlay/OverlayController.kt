@@ -131,7 +131,12 @@ class OverlayController(
         }.getOrDefault(OverlayInsets(top = 24.dp, bottom = 16.dp))
     }
 
-    @Suppress("DEPRECATION")
+    /**
+     * Android 10 (API 29) has no public status-bar inset API, so the framework
+     * dimension resource is the only reliable fallback. The resource lookup is
+     * intentionally confined to this pre-R path; Android 11+ uses WindowMetrics.
+     */
+    @Suppress("DEPRECATION", "DiscouragedApi", "InternalInsetResource")
     private fun legacyInsets(manager: WindowManager, density: Float): OverlayInsets {
         val display = manager.defaultDisplay
         val real = DisplayMetrics().also { display.getRealMetrics(it) }

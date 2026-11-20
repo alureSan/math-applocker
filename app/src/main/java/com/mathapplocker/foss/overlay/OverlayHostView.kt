@@ -2,6 +2,7 @@ package com.mathapplocker.foss.overlay
 
 import android.content.Context
 import android.view.KeyEvent
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.AbstractComposeView
 import androidx.lifecycle.Lifecycle
@@ -64,7 +65,14 @@ class OverlayHostView(context: Context) : AbstractComposeView(context),
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.keyCode == KeyEvent.KEYCODE_BACK) return true
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            // Back never dismisses the challenge, but it should close a text keyboard.
+            val inputMethodManager = context.getSystemService(InputMethodManager::class.java)
+            if (inputMethodManager?.isAcceptingText == true) {
+                inputMethodManager.hideSoftInputFromWindow(windowToken, 0)
+            }
+            return true
+        }
         return super.dispatchKeyEvent(event)
     }
 }

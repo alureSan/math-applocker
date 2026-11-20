@@ -1,54 +1,33 @@
 # Roadmap
 
-Ideas and planned work for future sessions. Nothing here is implemented yet.
+Ideas and planned work for future sessions.
 
-## 1. Configurable operand digit count
+## Done
 
-Add a setting for how many digits generated operands should have, instead of the
-fixed per-age ranges.
-
-Design notes:
-
-- New preference, e.g. `operand_digits` (1–4, default derived from the age preset).
-- `QuestionGenerator` should derive its ranges from the digit count
-  (`1 → 1..9`, `2 → 10..99`, `3 → 100..999`, `4 → 1000..9999`), while keeping:
-  - division always exact (pick divisor + result, then multiply),
-  - non-negative subtraction for kid presets,
-  - multiplication ranges capped so results stay readable.
-- UI: add a "Digits" selector (chips or slider) to **Math rules & timing**, and
-  show it in the Home summary.
-- Consider per-operation overrides later if the single setting feels limiting.
-
-## 2. Custom question sets (numeric + text answers)
-
-Replace the single custom-question list with named sets that support both types
-of answers.
-
-Design notes:
-
-- Room schema v2:
-  - `question_sets(id, name)` — e.g. "Biology exam".
-  - `custom_questions(id, set_id, text, answer, answer_type)` where
-    `answer_type` is `NUMBER` or `TEXT`.
-  - Provide a migration from v1 (existing questions go into a "Custom" set with
-    `answer_type = NUMBER`).
-- Management UI:
-  - List of sets with add/rename/delete.
-  - Per-set list of questions; add/edit/delete.
-  - Answer field switches between numeric and free text based on the type.
-- Mixing:
-  - Let the parent enable any combination of sets to mix into challenges.
-  - Store enabled set IDs in preferences.
-- Overlay input:
-  - Numeric questions keep the existing keypad.
-  - Text questions need an IME inside the overlay window. This is the tricky
-    part: the overlay must be focusable and allow the IME (window flag
-    `FLAG_ALT_FOCUSABLE_IM`/no `FLAG_NOT_FOCUSABLE`, IME insets handling), or
-    text questions should open a transparent/dialog activity for input while
-    keeping the locked app blocked.
-  - Compare text answers case-insensitively, trimmed, and optionally ignore
-    accents; document the matching rule in the UI.
-- Localization: all new labels in English and Spanish.
+- **Configurable operand digit count** — a 1–4 digit selector (plus "Auto", which
+  follows the age preset) drives generated addition/subtraction ranges. Products
+  are capped so answers stay readable, and division is always exact.
+- **Custom problem sets** — named Room-backed sets with per-set switches,
+  add/rename/delete, and per-set question management. Questions can be switched
+  on or off individually. Old flat custom questions are migrated into an enabled
+  "Custom" set.
+- **Calculator validation** — numeric custom questions are parsed with standard
+  precedence and parentheses. Invalid syntax, division by zero, non-whole
+  division and out-of-range results are rejected; the answer can be calculated
+  automatically or checked against the typed one.
+- **Text-answer questions** — each question can use a free-text answer. Matching
+  ignores case, accents and repeated whitespace. The challenge overlay switches
+  from the numeric keypad to the system IME for these questions.
+- **Multiplication tables** — 1×–9× toggles replace generated multiplication
+  questions when at least one table is selected.
+- **Basic and Advanced modes** — Basic uses generated questions from the age,
+  digit and operation settings. Advanced uses only enabled challenge sets and
+  multiplication tables, with a safe fallback to Basic when nothing is enabled.
+  The main screen shows a compact green permission card when everything is
+  granted, and a red card listing only the missing permissions otherwise.
+- **Auto-saving settings** — no Save button to forget. Changing the age preset
+  resets digits to Auto. The overlay and its notification use the in-app
+  language even on Android 10, where services do not inherit AppCompat locales.
 
 ## Smaller follow-ups
 
@@ -56,3 +35,18 @@ Design notes:
 - Optional PIN brute-force backoff persistence test.
 - Consider per-app unlock windows instead of one global unlock window.
 - Add a short in-app "How it works" page explaining the three special permissions.
+- Consider per-operation digit overrides if one global digit setting feels limiting.
+- Consider accepting alternative spellings for text answers if parents request it.
+
+## Next session: tablet and landscape QA
+
+Test the debug and release builds on the Samsung tablet and on the phone in
+landscape:
+
+- PIN setup/auth layout. The keypad now uses a two-column layout with keys sized
+  to the available height; verify on the tablet and on smaller phones.
+- Home: status card, compact permission card, Basic/Advanced switch.
+- Basic rules, advanced timing, multiplication table grid, set/question lists.
+- Overlay: numeric keypad, text-question IME, progress, exit button, and the
+  keyboard covering/reflowing the content.
+- Overlay and notification language in Spanish.

@@ -52,6 +52,7 @@ fun AppRoot() {
         )
 
         screen == Screen.Questions -> QuestionsScreen(
+            prefs = prefs,
             onBack = { navigate(Screen.Home) },
         )
     }

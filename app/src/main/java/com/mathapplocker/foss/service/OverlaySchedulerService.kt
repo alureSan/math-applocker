@@ -14,6 +14,7 @@ import com.mathapplocker.foss.math.QuestionGenerator
 import com.mathapplocker.foss.math.QuizQuestion
 import com.mathapplocker.foss.media.MediaPauseController
 import com.mathapplocker.foss.overlay.OverlayController
+import com.mathapplocker.foss.util.AppLocale
 import com.mathapplocker.foss.util.AppPermissions
 import com.mathapplocker.foss.util.Notifications
 import kotlinx.coroutines.CoroutineScope
@@ -54,11 +55,12 @@ class OverlaySchedulerService : Service() {
         prefs = Prefs.get(this)
         detector = ForegroundAppDetector(this)
         media = MediaPauseController(this)
-        Notifications.ensureChannel(this)
+        Notifications.ensureChannel(AppLocale.localizedContext(this))
         startForegroundCompat()
         loopJob = serviceScope.launch { runProtectionLoop() }
         serviceScope.launch {
             prefs.settings.collect {
+                Notifications.ensureChannel(AppLocale.localizedContext(this@OverlaySchedulerService))
                 notificationSignature = null
                 updateNotification()
             }
@@ -99,7 +101,7 @@ class OverlaySchedulerService : Service() {
     private fun startForegroundCompat() {
         val settings = prefs.settings.value
         val notification = Notifications.buildServiceNotification(
-            context = this,
+            context = AppLocale.localizedContext(this),
             enabled = settings.enabled,
             blockedCount = settings.blockedApps.size,
             missingPermissions = AppPermissions.missingCorePermissions(this).isNotEmpty(),
@@ -181,22 +183,56 @@ class OverlaySchedulerService : Service() {
             if (detector.currentForeground() != foregroundPackage) return@launch
             if (prefs.settings.value.isWithinUnlockWindow()) return@launch
 
-            val customQuestions = withContext(Dispatchers.IO) {
-                runCatching {
-                    AppDatabase.get(this@OverlaySchedulerService)
-                        .customQuestions()
-                        .getAll()
-                        .map { QuizQuestion(text = it.text, answer = it.answer, isCustom = true) }
-                }.getOrDefault(emptyList())
+            val customQuestions = if (settings.advancedMode) {
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        val database = AppDatabase.get(this@OverlaySchedulerService)
+                        val enabledSets = database.questionSets().enabledIds()
+                        if (enabledSets.isEmpty()) {
+                            emptyList()
+                        } else {
+                            database.customQuestions()
+                                .getForSets(enabledSets)
+                                .map {
+                                    QuizQuestion(
+                                        text = it.text,
+                                        answer = it.answer,
+                                        isCustom = true,
+                                        textAnswer = it.textAnswer,
+                                    )
+                                }
+                        }
+                    }.getOrDefault(emptyList())
+                }
+            } else {
+                emptyList()
             }
 
             val quiz = withContext(Dispatchers.Default) {
-                QuestionGenerator.generate(
-                    count = settings.numQuestions,
-                    difficulty = settings.difficulty,
-                    operations = settings.categories,
-                    customQuestions = customQuestions,
-                )
+                if (settings.advancedMode) {
+                    val advanced = QuestionGenerator.generateAdvanced(
+                        count = settings.numQuestions,
+                        customQuestions = customQuestions,
+                        timesTables = settings.timesTables,
+                    )
+                    // Never show an empty challenge (it would auto-solve). Fall back
+                    // to generated questions until the parent adds content.
+                    advanced.ifEmpty {
+                        QuestionGenerator.generate(
+                            count = settings.numQuestions,
+                            difficulty = settings.difficulty,
+                            operations = settings.categories,
+                            digits = settings.operandDigits,
+                        )
+                    }
+                } else {
+                    QuestionGenerator.generate(
+                        count = settings.numQuestions,
+                        difficulty = settings.difficulty,
+                        operations = settings.categories,
+                        digits = settings.operandDigits,
+                    )
+                }
             }
 
             // The user may have left while questions were being built.
@@ -206,9 +242,10 @@ class OverlaySchedulerService : Service() {
 
             media.start(serviceScope)
             val controller = OverlayController(
-                context = this@OverlaySchedulerService,
+                context = AppLocale.localizedContext(this@OverlaySchedulerService),
                 questions = quiz,
-                allowNegative = settings.difficulty.allowNegative,
+                // Custom questions may have negative answers even on kid presets.
+                allowNegative = settings.difficulty.allowNegative || quiz.any { it.answer < 0 },
                 onSolved = { onChallengeSolved() },
                 onExitHome = { onExitToHome() },
             )
@@ -256,7 +293,7 @@ class OverlaySchedulerService : Service() {
         if (signature == notificationSignature) return
         notificationSignature = signature
         Notifications.updateServiceNotification(
-            context = this,
+            context = AppLocale.localizedContext(this),
             enabled = settings.enabled,
             blockedCount = settings.blockedApps.size,
         )

@@ -7,49 +7,70 @@
     <string name="cancel">Cancelar</string>
     <string name="save">Guardar</string>
     <string name="delete">Eliminar</string>
-    <string name="done">Listo</string>
     <string name="back">Atrás</string>
-    <string name="loading">Cargando…</string>
-    <string name="settings_saved">Ajustes guardados</string>
     <string name="not_now">Ahora no</string>
-    <string name="continue_label">Continuar</string>
-    <string name="error_generic">Algo ha salido mal</string>
 
     <!-- Home -->
     <string name="service_active">El servicio está activo</string>
     <string name="service_inactive">El servicio está inactivo</string>
-    <string name="service_disabled_title">Servicio desactivado</string>
     <string name="service_disabled_msg">Activa el servicio para empezar a mostrar retos de matemáticas.</string>
-    <string name="enable_service">Activar retos de matemáticas</string>
-    <string name="disable_service">Desactivar</string>
     <string name="permission_needed">Permiso necesario</string>
-    <string name="permissions_title">Permisos</string>
     <string name="grant">Conceder</string>
-    <string name="granted">Concedido</string>
     <string name="permission_required_to_enable">Concede los permisos necesarios para activar la protección.</string>
+    <string name="all_permissions_granted">Todos los permisos concedidos</string>
+    <string name="all_permissions_summary">La protección puede funcionar de forma fiable.</string>
+    <string name="missing_permissions_title">Para un mejor uso, concede los permisos</string>
+    <string name="missing_permissions_summary">Concede los permisos que faltan para que la protección funcione bien.</string>
     <string name="permission_dialog_message">%1$s\n\n%2$s</string>
     <string name="unlock_remaining">Apps seleccionadas desbloqueadas durante %1$s</string>
     <string name="configuration">Configuración</string>
-    <string name="rules_summary">%1$d min · %2$d tareas</string>
+    <plurals name="rules_summary">
+        <item quantity="one">%1$d min · %2$d tarea · %3$s</item>
+        <item quantity="many">%1$d min · %2$d de tareas · %3$s</item>
+        <item quantity="other">%1$d min · %2$d tareas · %3$s</item>
+    </plurals>
+    <plurals name="digit_count">
+        <item quantity="one">%1$d dígito</item>
+        <item quantity="many">%1$d de dígitos</item>
+        <item quantity="other">%1$d dígitos</item>
+    </plurals>
     <string name="digits_entered">%1$d de 4 dígitos introducidos</string>
     <string name="delete_digit">Borrar dígito</string>
     <string name="perm_overlay_title">Mostrar sobre otras apps</string>
     <string name="perm_overlay_explain">Necesario para mostrar el reto de matemáticas sobre la app bloqueada.</string>
     <string name="perm_usage_title">Acceso de uso</string>
     <string name="perm_usage_explain">Necesario para detectar qué app estás usando.</string>
-    <string name="perm_usage_cannot_open">No se pudieron abrir los ajustes de acceso de uso. Ve a Ajustes → Apps → Acceso especial → Acceso de uso y activa Math Applocker.</string>
     <string name="perm_notifications_title">Notificaciones</string>
     <string name="perm_notifications_explain">Necesario para que el servicio de protección siga funcionando en segundo plano.</string>
     <string name="perm_battery_title">Optimización de batería</string>
     <string name="perm_battery_explain">Desactiva la optimización de batería para Math Applocker y evitar que el sistema detenga el servicio.</string>
 
     <string name="configure_math_rules">Reglas y tiempos</string>
+    <string name="challenge_mode">Modo de retos</string>
+    <string name="mode_basic">Básico</string>
+    <string name="mode_advanced">Avanzado</string>
+    <string name="mode_basic_summary">Operaciones generadas con las reglas de abajo.</string>
+    <string name="mode_advanced_summary">Solo tus retos personalizados y tablas de multiplicar activados. Si no hay ninguno, se usan preguntas del modo Básico.</string>
     <string name="choose_apps">Apps a bloquear</string>
     <string name="choose_apps_title">Elegir apps</string>
-    <string name="choose_apps_summary">%1$d seleccionadas</string>
+    <plurals name="choose_apps_summary">
+        <item quantity="one">%1$d app seleccionada</item>
+        <item quantity="many">%1$d de apps seleccionadas</item>
+        <item quantity="other">%1$d apps seleccionadas</item>
+    </plurals>
     <string name="no_apps_selected">Ninguna app seleccionada</string>
-    <string name="manage_questions">Preguntas personalizadas</string>
-    <string name="manage_questions_summary">%1$d guardadas</string>
+    <string name="manage_questions">Retos personalizados</string>
+    <plurals name="set_count">
+        <item quantity="one">%1$d conjunto</item>
+        <item quantity="many">%1$d de conjuntos</item>
+        <item quantity="other">%1$d conjuntos</item>
+    </plurals>
+    <plurals name="table_count">
+        <item quantity="one">%1$d tabla</item>
+        <item quantity="many">%1$d de tablas</item>
+        <item quantity="other">%1$d tablas</item>
+    </plurals>
+    <string name="no_tables">Sin tablas</string>
     <string name="choose_language_title">Idioma</string>
     <string name="language_english">English</string>
     <string name="language_spanish">Español</string>
@@ -60,7 +81,12 @@
     <!-- Settings -->
     <string name="interval_minutes">Intervalo entre retos (minutos)</string>
     <string name="num_questions">Tareas por reto</string>
+    <string name="challenge_timing">Tiempo de los retos</string>
+    <string name="advanced_tasks_helper">Máximo por reto. Los retos avanzados son más cortos si hay menos preguntas activadas.</string>
     <string name="difficulty">Dificultad</string>
+    <string name="operand_digits">Dígitos por número</string>
+    <string name="digits_auto">Auto</string>
+    <string name="operand_digits_helper">Auto sigue la dificultad elegida. Con números grandes, los resultados de multiplicación se mantienen cortos y la división siempre tiene una respuesta exacta.</string>
     <string name="categories">Operaciones</string>
     <string name="cat_add">Suma (+)</string>
     <string name="cat_sub">Resta (−)</string>
@@ -76,6 +102,7 @@
     <string name="invalid_interval">Introduce un intervalo entre 1 y 720 minutos</string>
     <string name="invalid_question_count">Introduce entre 1 y 20 tareas</string>
     <string name="interval_helper">Después de resolver un reto, las apps seleccionadas quedan desbloqueadas durante este tiempo.</string>
+    <string name="settings_auto_save">Los cambios se guardan automáticamente.</string>
 
     <!-- App picker -->
     <string name="search_apps">Buscar apps</string>
@@ -83,13 +110,48 @@
     <string name="save_apps">Guardar selección</string>
     <string name="app_list_saved">Selección de apps guardada</string>
 
-    <!-- Custom questions -->
+    <!-- Custom math problems -->
+    <string name="times_tables">Tablas de multiplicar</string>
+    <string name="times_tables_helper">Elige las tablas que quieres practicar. Si hay alguna activa, las multiplicaciones saldrán de ellas.</string>
+    <string name="times_table_n">%1$d×</string>
+    <string name="custom_sets_title">Retos personalizados</string>
+    <string name="add_set">Añadir conjunto</string>
+    <string name="add_set_title">Nuevo conjunto</string>
+    <string name="rename_set_title">Renombrar conjunto</string>
+    <string name="hint_set_name">Nombre del conjunto</string>
+    <string name="set_name_required">Introduce un nombre</string>
+    <string name="no_sets">Aún no hay conjuntos. Añade uno para incluir tus propios problemas en cada reto.</string>
+    <string name="confirm_delete_set_title">¿Eliminar conjunto?</string>
+    <string name="confirm_delete_set_msg">Se eliminará «%1$s» y todas sus preguntas.</string>
+    <string name="edit_set">Editar conjunto</string>
+    <string name="delete_set">Eliminar conjunto</string>
+    <string name="edit_question">Editar pregunta</string>
+    <string name="edit_question_title">Editar pregunta</string>
+    <string name="no_questions_in_set">Aún no hay preguntas en este conjunto.</string>
+    <plurals name="question_count">
+        <item quantity="one">%1$d pregunta</item>
+        <item quantity="many">%1$d de preguntas</item>
+        <item quantity="other">%1$d preguntas</item>
+    </plurals>
+
     <string name="add_question">Añadir pregunta</string>
     <string name="add_question_title">Nueva pregunta personalizada</string>
     <string name="hint_question">Pregunta (p. ej. 5 + 5)</string>
     <string name="hint_answer">Respuesta</string>
-    <string name="fill_question_and_answer">Completa la pregunta y una respuesta numérica</string>
-    <string name="no_custom_questions">Aún no hay preguntas personalizadas. Se mezclarán en cada reto.</string>
+    <string name="hint_text_question">Pregunta</string>
+    <string name="hint_text_answer">Respuesta de texto</string>
+    <string name="answer_type_number">Número</string>
+    <string name="answer_type_text">Texto</string>
+    <string name="text_answer_helper">No se distinguen mayúsculas ni acentos</string>
+    <string name="question_required">Introduce una pregunta</string>
+    <string name="text_answer_required">Introduce una respuesta de texto</string>
+    <string name="answer_optional_hint">Déjalo vacío para usar el resultado calculado</string>
+    <string name="question_result">= %1$d</string>
+    <string name="invalid_math_question">Introduce un problema válido, como 12 + 8 o (3 + 1) × 5</string>
+    <string name="division_by_zero">No se puede dividir entre cero</string>
+    <string name="division_not_whole">La división debe dar un número entero</string>
+    <string name="expression_too_large">Los números son demasiado grandes</string>
+    <string name="answer_mismatch">La respuesta correcta es %1$d</string>
     <string name="confirm_delete_question_title">¿Eliminar pregunta?</string>
     <string name="confirm_delete_question_msg">Esta pregunta personalizada se quitará de los próximos retos.</string>
     <string name="delete_question">Eliminar pregunta</string>
@@ -102,9 +164,7 @@
     <string name="enter_pin_subtitle">Math Applocker está bloqueado.</string>
     <string name="pin_mismatch">Los PIN no coinciden</string>
     <string name="wrong_pin">PIN incorrecto</string>
-    <string name="pin_too_short">Introduce 4 dígitos</string>
     <string name="too_many_attempts">Demasiados intentos. Inténtalo en %1$d s</string>
-    <string name="pin_hint">PIN de 4 dígitos</string>
 
     <!-- Overlay / quiz -->
     <string name="overlay_title">Resuelve para continuar</string>
@@ -113,7 +173,6 @@
     <string name="overlay_correct">¡Correcto!</string>
     <string name="overlay_incorrect">Casi, inténtalo otra vez</string>
     <string name="overlay_submit">Comprobar</string>
-    <string name="overlay_solved">Reto completado</string>
     <string name="overlay_exit_home">Salir al inicio</string>
     <string name="overlay_clear">Borrar</string>
     <string name="overlay_backspace">Borrar último dígito</string>
@@ -124,11 +183,14 @@
     <string name="notif_channel_name">Servicio de protección</string>
     <string name="notif_channel_description">Mantiene activo el servicio de retos de matemáticas.</string>
     <string name="notif_title">Math Applocker</string>
-    <string name="notif_active">Protegiendo %1$d app(s)</string>
+    <plurals name="protecting_apps">
+        <item quantity="one">Protegiendo %1$d app</item>
+        <item quantity="many">Protegiendo %1$d de apps</item>
+        <item quantity="other">Protegiendo %1$d apps</item>
+    </plurals>
     <string name="notif_no_apps">Aún no hay apps seleccionadas</string>
     <string name="notif_paused">Servicio en pausa</string>
     <string name="notif_stop">Detener</string>
-    <string name="notif_open">Abrir</string>
     <string name="notif_permission_missing">Faltan permisos: toca para terminar la configuración</string>
 
     <string name="boot_restart_failed">Android bloqueó el inicio en segundo plano. Abre Math Applocker para reactivar la protección.</string>

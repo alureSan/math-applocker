@@ -12,15 +12,18 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -30,10 +33,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,17 +50,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.mathapplocker.foss.R
 import com.mathapplocker.foss.math.QuizQuestion
+import com.mathapplocker.foss.math.TextAnswerMatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -82,6 +95,22 @@ fun QuizOverlayScreen(
     val safeIndex = index.coerceIn(0, questions.lastIndex)
     val question = questions[safeIndex]
     val isLast = safeIndex == questions.lastIndex
+    val isText = question.isText
+    val textFocusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    DisposableEffect(Unit) {
+        onDispose { keyboard?.hide() }
+    }
+
+    LaunchedEffect(safeIndex, isText) {
+        if (isText) {
+            textFocusRequester.requestFocus()
+            keyboard?.show()
+        } else {
+            keyboard?.hide()
+        }
+    }
 
     val confirmHaptic = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
         HapticFeedbackConstants.CONFIRM
@@ -121,6 +150,26 @@ fun QuizOverlayScreen(
     }
 
     fun submit() {
+        if (question.isText) {
+            val expected = question.textAnswer
+            if (expected != null && TextAnswerMatcher.matches(input, expected)) {
+                view.performHapticFeedback(confirmHaptic)
+                if (isLast) {
+                    onSolved()
+                } else {
+                    feedback = Feedback.CORRECT
+                    index = safeIndex + 1
+                    input = ""
+                }
+            } else {
+                feedback = Feedback.INCORRECT
+                input = ""
+                view.performHapticFeedback(rejectHaptic)
+                shakeNow()
+            }
+            return
+        }
+
         val value = input.toIntOrNull()
         if (value == null) {
             feedback = Feedback.INCORRECT
@@ -172,7 +221,8 @@ fun QuizOverlayScreen(
                     end = insets.right + 20.dp,
                     top = insets.top + 10.dp,
                     bottom = insets.bottom + 10.dp,
-                ),
+                )
+                .imePadding(),
         ) {
             val landscape = maxWidth > maxHeight
 
@@ -196,64 +246,88 @@ fun QuizOverlayScreen(
 
                 Spacer(Modifier.height(8.dp))
 
-                if (landscape) {
-                    Row(
+                if (landscape && !isText) {
+                    BoxWithConstraints(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(18.dp),
-                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Card(
-                            modifier = Modifier.weight(1.15f),
-                            shape = RoundedCornerShape(26.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                QuizHeader(
-                                    progress = (safeIndex + 1f) / questions.size,
-                                    questionText = question.text,
-                                    shakeOffset = shake.value,
-                                )
-                                Spacer(Modifier.height(12.dp))
-                                AnswerField(
-                                    input = input,
-                                    shakeOffset = shake.value,
-                                    onClear = { input = "" },
-                                )
-                                Spacer(Modifier.height(6.dp))
-                                FeedbackText(feedback)
-                            }
-                        }
+                        // The keypad is the tallest element. Size its keys from the
+                        // height left after the header and footer so nothing clips.
+                        val keypadPadding = 14.dp
+                        val keyHeight = ((maxHeight - keypadPadding * 2 - 8.dp * 3) / 4)
+                            .coerceIn(36.dp, 54.dp)
 
-                        Card(
-                            modifier = Modifier.weight(0.9f),
-                            shape = RoundedCornerShape(26.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(
+                            Card(
                                 modifier = Modifier
-                                    .padding(horizontal = 18.dp, vertical = 18.dp)
-                                    .widthIn(max = 440.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                                    .weight(1.15f)
+                                    .fillMaxHeight(),
+                                shape = RoundedCornerShape(24.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
                             ) {
-                                Keypad(
-                                    allowNegative = allowNegative,
-                                    onDigit = onDigit,
-                                    onMinus = onMinus,
-                                    onBackspace = onBackspace,
-                                )
-                                Spacer(Modifier.height(14.dp))
-                                SubmitButton(onClick = { submit() })
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                ) {
+                                    Text(
+                                        text = question.text,
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.offset {
+                                            IntOffset((shake.value * 12).dp.roundToPx(), 0)
+                                        },
+                                    )
+                                    Spacer(Modifier.height(10.dp))
+                                    AnswerField(
+                                        input = input,
+                                        shakeOffset = shake.value,
+                                        onClear = { input = "" },
+                                    )
+                                    Spacer(Modifier.height(4.dp))
+                                    FeedbackText(feedback)
+                                    Spacer(Modifier.height(8.dp))
+                                    SubmitButton(onClick = { submit() }, height = 44.dp)
+                                }
+                            }
+
+                            Card(
+                                modifier = Modifier
+                                    .weight(0.85f)
+                                    .fillMaxHeight(),
+                                shape = RoundedCornerShape(24.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = keypadPadding, vertical = keypadPadding),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Keypad(
+                                        allowNegative = allowNegative,
+                                        onDigit = onDigit,
+                                        onMinus = onMinus,
+                                        onBackspace = onBackspace,
+                                        keyHeight = keyHeight,
+                                    )
+                                }
                             }
                         }
                     }
@@ -281,22 +355,36 @@ fun QuizOverlayScreen(
                                     progress = (safeIndex + 1f) / questions.size,
                                     questionText = question.text,
                                     shakeOffset = shake.value,
+                                    compact = isText,
                                 )
                                 Spacer(Modifier.height(14.dp))
-                                AnswerField(
-                                    input = input,
-                                    shakeOffset = shake.value,
-                                    onClear = { input = "" },
-                                )
+                                if (isText) {
+                                    TextAnswerField(
+                                        input = input,
+                                        shakeOffset = shake.value,
+                                        focusRequester = textFocusRequester,
+                                        onInput = { input = it },
+                                        onClear = { input = "" },
+                                        onSubmit = { submit() },
+                                    )
+                                } else {
+                                    AnswerField(
+                                        input = input,
+                                        shakeOffset = shake.value,
+                                        onClear = { input = "" },
+                                    )
+                                }
                                 Spacer(Modifier.height(6.dp))
                                 FeedbackText(feedback)
-                                Spacer(Modifier.height(6.dp))
-                                Keypad(
-                                    allowNegative = allowNegative,
-                                    onDigit = onDigit,
-                                    onMinus = onMinus,
-                                    onBackspace = onBackspace,
-                                )
+                                if (!isText) {
+                                    Spacer(Modifier.height(6.dp))
+                                    Keypad(
+                                        allowNegative = allowNegative,
+                                        onDigit = onDigit,
+                                        onMinus = onMinus,
+                                        onBackspace = onBackspace,
+                                    )
+                                }
                                 Spacer(Modifier.height(14.dp))
                                 SubmitButton(onClick = { submit() })
                             }
@@ -322,6 +410,7 @@ private fun QuizHeader(
     progress: Float,
     questionText: String,
     shakeOffset: Float,
+    compact: Boolean = false,
 ) {
     Text(
         text = stringResource(R.string.overlay_title),
@@ -347,7 +436,11 @@ private fun QuizHeader(
     Spacer(Modifier.height(14.dp))
     Text(
         text = questionText,
-        style = MaterialTheme.typography.displaySmall,
+        style = if (compact) {
+            MaterialTheme.typography.headlineSmall
+        } else {
+            MaterialTheme.typography.displaySmall
+        },
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
         modifier = Modifier.offset(x = (shakeOffset * 12).dp),
@@ -390,6 +483,37 @@ private fun AnswerField(
 }
 
 @Composable
+private fun TextAnswerField(
+    input: String,
+    shakeOffset: Float,
+    focusRequester: FocusRequester,
+    onInput: (String) -> Unit,
+    onClear: () -> Unit,
+    onSubmit: () -> Unit,
+) {
+    OutlinedTextField(
+        value = input,
+        onValueChange = { onInput(it.take(80)) },
+        placeholder = { Text(stringResource(R.string.overlay_answer_hint)) },
+        singleLine = true,
+        textStyle = MaterialTheme.typography.headlineSmall.copy(
+            fontFamily = FontFamily.Monospace,
+        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+        trailingIcon = {
+            TextButton(onClick = onClear) {
+                Text(stringResource(R.string.overlay_clear))
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset(x = (shakeOffset * 12).dp)
+            .focusRequester(focusRequester),
+    )
+}
+
+@Composable
 private fun FeedbackText(feedback: Feedback?) {
     val color = when (feedback) {
         Feedback.CORRECT -> MaterialTheme.colorScheme.primary
@@ -410,12 +534,15 @@ private fun FeedbackText(feedback: Feedback?) {
 }
 
 @Composable
-private fun SubmitButton(onClick: () -> Unit) {
+private fun SubmitButton(
+    onClick: () -> Unit,
+    height: Dp = 54.dp,
+) {
     Button(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(54.dp),
+            .height(height),
         shape = RoundedCornerShape(16.dp),
     ) {
         Text(
@@ -431,6 +558,7 @@ private fun Keypad(
     onDigit: (String) -> Unit,
     onMinus: () -> Unit,
     onBackspace: () -> Unit,
+    keyHeight: Dp = 54.dp,
 ) {
     val rows = listOf(
         listOf("1", "2", "3"),
@@ -443,6 +571,7 @@ private fun Keypad(
                 row.forEach { digit ->
                     KeypadKey(
                         label = digit,
+                        keyHeight = keyHeight,
                         modifier = Modifier.weight(1f),
                         onClick = { onDigit(digit) },
                     )
@@ -453,6 +582,7 @@ private fun Keypad(
             if (allowNegative) {
                 KeypadKey(
                     label = "−",
+                    keyHeight = keyHeight,
                     modifier = Modifier.weight(1f),
                     onClick = onMinus,
                 )
@@ -461,12 +591,14 @@ private fun Keypad(
             }
             KeypadKey(
                 label = "0",
+                keyHeight = keyHeight,
                 modifier = Modifier.weight(1f),
                 onClick = { onDigit("0") },
             )
             val backspaceLabel = stringResource(R.string.overlay_backspace)
             KeypadKey(
                 label = "⌫",
+                keyHeight = keyHeight,
                 modifier = Modifier
                     .weight(1f)
                     .semantics { contentDescription = backspaceLabel },
@@ -480,11 +612,12 @@ private fun Keypad(
 private fun KeypadKey(
     label: String,
     modifier: Modifier = Modifier,
+    keyHeight: Dp = 54.dp,
     onClick: () -> Unit,
 ) {
     Box(
         modifier = modifier
-            .height(54.dp)
+            .height(keyHeight)
             .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable(onClick = onClick),

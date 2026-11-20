@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -42,6 +43,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mathapplocker.foss.R
 import com.mathapplocker.foss.data.PinHasher
@@ -199,81 +201,165 @@ private fun PinScaffold(
     onBackspace: () -> Unit,
 ) {
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = 28.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+                .safeDrawingPadding(),
         ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.size(64.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Filled.Lock,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(28.dp),
-                    )
+            val landscape = maxWidth > maxHeight
+
+            if (landscape) {
+                // Landscape phones are short: put the text on the left and the
+                // keypad on the right, and shrink the keys to fit the height.
+                val availableHeight = maxHeight
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 32.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        PinHeader(
+                            title = title,
+                            subtitle = subtitle,
+                            inputLength = inputLength,
+                            errorText = errorText,
+                            compact = true,
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        val busyReserve = if (busy) 36.dp else 0.dp
+                        val keyHeight = ((availableHeight - 24.dp - 30.dp - busyReserve) / 4)
+                            .coerceIn(38.dp, 64.dp)
+                        PinKeypad(
+                            onDigit = onDigit,
+                            onBackspace = onBackspace,
+                            enabled = enabled && !busy,
+                            keyHeight = keyHeight,
+                            modifier = Modifier
+                                .widthIn(max = 320.dp)
+                                .fillMaxWidth(),
+                        )
+                        if (busy) {
+                            Spacer(Modifier.height(10.dp))
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                    }
                 }
-            }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 28.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    PinHeader(
+                        title = title,
+                        subtitle = subtitle,
+                        inputLength = inputLength,
+                        errorText = errorText,
+                    )
 
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(Modifier.height(28.dp))
-            val digitsDescription = stringResource(R.string.digits_entered, inputLength)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(18.dp),
-                modifier = Modifier.semantics { contentDescription = digitsDescription },
-            ) {
-                repeat(4) { index ->
-                    val filled = index < inputLength
-                    Box(
+                    Spacer(Modifier.height(28.dp))
+                    PinKeypad(
+                        onDigit = onDigit,
+                        onBackspace = onBackspace,
+                        enabled = enabled && !busy,
                         modifier = Modifier
-                            .size(18.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (filled) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceVariant,
-                            ),
+                            .widthIn(max = 320.dp)
+                            .fillMaxWidth(),
                     )
+
+                    if (busy) {
+                        Spacer(Modifier.height(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    }
                 }
-            }
-
-            Spacer(Modifier.height(14.dp))
-            Text(
-                text = errorText ?: " ",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.height(22.dp),
-            )
-
-            Spacer(Modifier.height(8.dp))
-            PinKeypad(onDigit = onDigit, onBackspace = onBackspace, enabled = enabled && !busy)
-
-            if (busy) {
-                Spacer(Modifier.height(16.dp))
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
             }
         }
     }
+}
+
+@Composable
+private fun PinHeader(
+    title: String,
+    subtitle: String,
+    inputLength: Int,
+    errorText: String?,
+    compact: Boolean = false,
+) {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        modifier = Modifier.size(if (compact) 52.dp else 64.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = Icons.Filled.Lock,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(if (compact) 24.dp else 28.dp),
+            )
+        }
+    }
+
+    Spacer(Modifier.height(if (compact) 12.dp else 20.dp))
+    Text(
+        text = title,
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.SemiBold,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(6.dp))
+    Text(
+        text = subtitle,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+    )
+
+    Spacer(Modifier.height(if (compact) 16.dp else 28.dp))
+    val digitsDescription = stringResource(R.string.digits_entered, inputLength)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(18.dp),
+        modifier = Modifier.semantics { contentDescription = digitsDescription },
+    ) {
+        repeat(4) { index ->
+            val filled = index < inputLength
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (filled) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceVariant,
+                    ),
+            )
+        }
+    }
+
+    Spacer(Modifier.height(if (compact) 10.dp else 14.dp))
+    Text(
+        text = errorText ?: " ",
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.height(22.dp),
+    )
 }
 
 @Composable
@@ -281,6 +367,8 @@ private fun PinKeypad(
     onDigit: (Char) -> Unit,
     onBackspace: () -> Unit,
     enabled: Boolean,
+    modifier: Modifier = Modifier,
+    keyHeight: Dp = 64.dp,
 ) {
     val rows = listOf(
         listOf('1', '2', '3'),
@@ -290,7 +378,7 @@ private fun PinKeypad(
     val backspaceDescription = stringResource(R.string.delete_digit)
 
     Column(
-        modifier = Modifier.width(290.dp),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         rows.forEach { row ->
@@ -299,16 +387,18 @@ private fun PinKeypad(
                     PinKey(
                         modifier = Modifier.weight(1f),
                         enabled = enabled,
+                        keyHeight = keyHeight,
                         onClick = { onDigit(digit) },
                     ) { digit.toString() }
                 }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Spacer(Modifier.weight(1f).height(64.dp))
+            Spacer(Modifier.weight(1f).height(keyHeight))
             PinKey(
                 modifier = Modifier.weight(1f),
                 enabled = enabled,
+                keyHeight = keyHeight,
                 onClick = { onDigit('0') },
             ) { "0" }
             PinKey(
@@ -316,6 +406,7 @@ private fun PinKeypad(
                     .weight(1f)
                     .semantics { contentDescription = backspaceDescription },
                 enabled = enabled,
+                keyHeight = keyHeight,
                 onClick = onBackspace,
             ) { "⌫" }
         }
@@ -326,12 +417,13 @@ private fun PinKeypad(
 private fun PinKey(
     modifier: Modifier = Modifier,
     enabled: Boolean,
+    keyHeight: Dp,
     onClick: () -> Unit,
     content: @Composable () -> String,
 ) {
     Box(
         modifier = modifier
-            .height(64.dp)
+            .height(keyHeight)
             .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .clickable(enabled = enabled, onClick = onClick),

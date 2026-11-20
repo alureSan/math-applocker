@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.mathapplocker.foss.data.Prefs
 import com.mathapplocker.foss.service.OverlaySchedulerService
+import com.mathapplocker.foss.util.AppLocale
 import com.mathapplocker.foss.util.AppPermissions
 import com.mathapplocker.foss.util.Notifications
 
@@ -25,7 +26,7 @@ class BootReceiver : BroadcastReceiver() {
             OverlaySchedulerService.start(context)
         } catch (_: Throwable) {
             // Android 12+ can reject background foreground-service starts.
-            Notifications.notifyBootFailure(context)
+            Notifications.notifyBootFailure(AppLocale.localizedContext(context))
         }
     }
 }

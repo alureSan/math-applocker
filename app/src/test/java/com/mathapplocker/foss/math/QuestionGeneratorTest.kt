@@ -100,4 +100,110 @@ class QuestionGeneratorTest {
             },
         )
     }
+
+    @Test
+    fun `explicit digit count controls addition operands`() {
+        for (digits in 1..4) {
+            repeat(100) { seed ->
+                val q = QuestionGenerator.generateOne(
+                    Difficulty.AGE_5_7,
+                    setOf(Operation.ADD),
+                    Random(seed),
+                    digits,
+                )
+                val (a, b) = q.text.split(" + ").map(String::toInt)
+                assertEquals(a + b, q.answer)
+                assertEquals("digits=$digits: ${q.text}", digits, a.toString().length)
+                assertEquals("digits=$digits: ${q.text}", digits, b.toString().length)
+            }
+        }
+    }
+
+    @Test
+    fun `explicit digit multiplication stays readable and exact`() {
+        for (digits in 1..4) {
+            repeat(200) { seed ->
+                val q = QuestionGenerator.generateOne(
+                    Difficulty.AGE_5_7,
+                    setOf(Operation.MUL),
+                    Random(seed),
+                    digits,
+                )
+                val (a, b) = q.text.split(" × ").map(String::toInt)
+                assertEquals(a * b, q.answer)
+                assertTrue("Product too large: ${q.text} = ${q.answer}", q.answer in 4..99_999)
+            }
+        }
+    }
+
+    @Test
+    fun `explicit digit division always has an exact answer`() {
+        for (digits in 1..4) {
+            repeat(200) { seed ->
+                val q = QuestionGenerator.generateOne(
+                    Difficulty.AGE_5_7,
+                    setOf(Operation.DIV),
+                    Random(seed),
+                    digits,
+                )
+                val (dividend, divisor) = q.text.split(" ÷ ").map(String::toInt)
+                assertEquals(0, dividend % divisor)
+                assertEquals(dividend / divisor, q.answer)
+            }
+        }
+    }
+
+    @Test
+    fun `selected multiplication tables drive multiplication questions`() {
+        val tables = setOf(3, 7)
+        repeat(200) { seed ->
+            val q = QuestionGenerator.generateOne(
+                Difficulty.AGE_5_7,
+                setOf(Operation.MUL),
+                Random(seed),
+                timesTables = tables,
+            )
+            val (a, b) = q.text.split(" × ").map(String::toInt)
+            assertTrue("Unexpected table: ${q.text}", a in tables)
+            assertTrue("Factor out of range: ${q.text}", b in 1..10)
+            assertEquals(a * b, q.answer)
+        }
+    }
+
+    @Test
+    fun `advanced challenge uses only custom content`() {
+        val custom = listOf(
+            QuizQuestion("Capital of France", 0, isCustom = true, textAnswer = "Paris"),
+            QuizQuestion("5 + 5", 10, isCustom = true),
+        )
+        val quiz = QuestionGenerator.generateAdvanced(5, custom, setOf(3), Random(2))
+        assertEquals(5, quiz.size)
+        assertEquals(5, quiz.map { it.text }.toSet().size)
+        assertTrue(
+            quiz.all { q -> q.isCustom || q.text.startsWith("3 × ") },
+        )
+    }
+
+    @Test
+    fun `advanced challenge is empty without content`() {
+        val quiz = QuestionGenerator.generateAdvanced(
+            count = 3,
+            customQuestions = emptyList(),
+            timesTables = emptySet(),
+            random = Random(1),
+        )
+        assertTrue(quiz.isEmpty())
+    }
+
+    @Test
+    fun `advanced challenge caps at available content`() {
+        val quiz = QuestionGenerator.generateAdvanced(
+            count = 20,
+            customQuestions = emptyList(),
+            timesTables = setOf(7),
+            random = Random(3),
+        )
+        assertEquals(10, quiz.size)
+        assertTrue(quiz.all { it.text.startsWith("7 × ") })
+    }
 }

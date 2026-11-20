@@ -70,6 +70,14 @@ android {
         compose = true
     }
 
+    bundle {
+        language {
+            // The app switches locales at runtime, so every translated locale
+            // must stay in the bundle instead of being split per language.
+            enableSplit = false
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
