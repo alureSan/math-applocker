@@ -1,6 +1,8 @@
 # Math Applocker
 
-A modern, privacy-friendly parental-control app for **Android 10+** that gates selected apps behind a short math challenge. This is a clean-room rewrite of an older app with no ads, no tracking, no network access, and no subscriptions.
+A privacy-friendly app for **Android 10+** that turns screen time into brain training: the apps you choose stay locked behind a short math challenge. Solve the questions to get in, and the challenge comes back after a while.
+
+It started as a way to help a family member keep exercising his brain while using his phone. It also works well for kids practising arithmetic, revising for exams, or memorising facts — with no ads, no tracking, no network access, and no subscriptions. This is a clean-room rewrite of an older app.
 
 <p align="center">
   <img src="docs/screenshots/home.png" width="45%" alt="Home screen" />
