@@ -23,11 +23,36 @@ jobs:
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
 
+      - name: Android Lint
+        run: ./gradlew lintDebug
+
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Release unit tests
+        run: ./gradlew testReleaseUnitTest
+
+      - name: Verify release APK has no INTERNET permission
+        run: |
+          set -euo pipefail
+          APK=$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' | head -n 1)
+          test -n "$APK"
+          AAPT=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -name aapt | sort -V | tail -n 1)
+          "$AAPT" dump permissions "$APK" | tee release-permissions.txt
+          ! grep -q 'android.permission.INTERNET' release-permissions.txt
+
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: math-applocker-debug
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload R8 mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-mapping
+          path: app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: warn
